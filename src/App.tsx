@@ -18,20 +18,6 @@ import {
 } from "react-icons/fa";
 import "./App.css";
 
-// function EmojiIcon({
-//   emoji,
-//   ...props
-// }: {
-//   emoji: string;
-// } & React.ImgHTMLAttributes<HTMLImageElement>) {
-//   return (
-//     <img
-//       src={`data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>${emoji}</text></svg>`}
-//       {...props}
-//     />
-//   );
-// }
-
 function App() {
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
     accept: {
@@ -65,29 +51,35 @@ function App() {
       ],
     },
   });
-  console.log(acceptedFiles);
-  const fileUrl = useMemo(() => {
-    const files = acceptedFiles;
-    if (!files) return;
-    if (files.length === 0) return;
-    const file = files[0];
-    return URL.createObjectURL(file);
+  const [fileURL, setFileURL] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    console.log(acceptedFiles);
+    const acceptedFile =
+      acceptedFiles && acceptedFiles.length > 0 ? acceptedFiles[0] : undefined;
+    if (!acceptedFile) return;
+    const u = URL.createObjectURL(acceptedFile);
+    setFileURL(u);
+    console.log("generated file URL", u);
+    return () => {
+      if (fileURL) console.log("revoking file URL", fileURL);
+      if (fileURL) URL.revokeObjectURL(fileURL);
+    };
   }, [acceptedFiles]);
 
   return (
     <div className="App">
       <div id="container">
-        <Player src={fileUrl} />
+        <Player src={fileURL} />
       </div>
 
       <div
         {...getRootProps({
           className: "dropzone",
-          style: { display: fileUrl ? "none" : undefined },
+          style: { display: fileURL ? "none" : undefined },
         })}
       >
         <input {...getInputProps()} />
-        <p>Drag 'n' drop some files here, or click to select files</p>
+        <p>Drop video file here, or click to select a video file</p>
       </div>
     </div>
   );
@@ -153,7 +145,7 @@ function Player({ src }: { src?: string }) {
     (change: number) => {
       const video = videoRef.current;
       if (!video) return;
-      video.playbackRate = Math.max(video.playbackRate + change, 0);
+      video.playbackRate = Math.max(video.playbackRate + change, 0.25);
     },
     [videoRef]
   );
@@ -182,9 +174,14 @@ function Player({ src }: { src?: string }) {
         case "ArrowDown":
           return changeVolume(-0.05);
         case "-":
+        case "[":
           return changePlaybackRate(-0.25);
         case "=":
+        case "]":
           return changePlaybackRate(0.25);
+        case "0":
+        case "\\":
+          return setPlaybackRate(1);
         case "f":
           return goFullScreen();
       }
@@ -193,9 +190,19 @@ function Player({ src }: { src?: string }) {
     return () => {
       document.removeEventListener("keydown", keydownListener);
     };
-  }, [playOrPause, seekVideo, changeVolume, changePlaybackRate]);
+  }, [
+    playOrPause,
+    seekVideo,
+    changeVolume,
+    changePlaybackRate,
+    setPlaybackRate,
+  ]);
 
   // console.log('loaded player')
+
+  if (!src) {
+    return <></>;
+  }
 
   return (
     <div
@@ -244,7 +251,7 @@ function Player({ src }: { src?: string }) {
         }}
         onRateChange={(e) => {
           console.log("onRateChange");
-          setCurrentPlaybackRate(videoRef.current?.playbackRate || 0);
+          setCurrentPlaybackRate(videoRef.current?.playbackRate || 1);
         }}
       />
       <Controls
@@ -268,7 +275,16 @@ function Player({ src }: { src?: string }) {
       <div id="lt-info" className="time-info">
         {`${formatTime(currentTime)} / ${formatTime(duration)} ` +
           `[-${formatTime(duration - currentTime)}] ` +
-          `(${((currentTime / duration) * 100).toFixed(2)}%)`}
+          `(${((currentTime / duration) * 100).toFixed(2)}%) ` +
+          `ETA: ${new Intl.DateTimeFormat("en-GB", {
+            hourCycle: "h12",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          }).format(
+            new Date().getTime() +
+              ((duration - currentTime) / 1 /*currentPlaybackRate*/) * 1000
+          )}`}
       </div>
       <div id="rt-info" className="time-info">
         R: {currentPlaybackRate}, V: {Math.round(currentVolume * 100)}%

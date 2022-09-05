@@ -67,6 +67,7 @@
   --danger: #dc3545;
   --light: #f8f9fa;
   --dark: #212529;
+  --monospace-font: Menlo, monospace;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
     Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
@@ -134,7 +135,7 @@ body {
   padding: 4px;
   background-color: rgba(8, 8, 8, 0.75);
   color: white;
-  font-family: monospace;
+  font-family: var(--monospace-font);
   font-size: clamp(1rem, 3vh, 1.5rem);
 }
 
@@ -170,7 +171,7 @@ body {
   justify-content: space-between;
 }
 .time {
-  font-family: monospace;
+  font-family: var(--monospace-font);
   font-size: 0.75rem;
 }
 
@@ -260,16 +261,16 @@ body {
 }
 .dropzone {
   position: fixed;
-  left: 2vw;
-  top: 2vh;
-  width: 96vw;
-  height: 96vh;
-  border: 15px dashed var(--gray);
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  border: 4px dashed var(--gray);
   border-radius: 15px;
-  background: var(--light);
+  /* background: var(--light); */
 
   /*text*/
-  color: var(--dark);
+  color: var(--white);
   font-size: 9vh;
   font-size: min(9vh, 4vw);
   font-weight: 500;
